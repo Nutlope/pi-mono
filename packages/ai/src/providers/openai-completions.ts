@@ -1010,6 +1010,7 @@ function detectCompat(model: Model<"openai-completions">): ResolvedOpenAIComplet
 	const isZai = provider === "zai" || baseUrl.includes("api.z.ai");
 	const isTogether =
 		provider === "together" || baseUrl.includes("api.together.ai") || baseUrl.includes("api.together.xyz");
+	const isTogetherOpenAIReasoningModel = isTogether && model.id.startsWith("openai/gpt-oss-");
 
 	const isNonStandard =
 		provider === "cerebras" ||
@@ -1042,7 +1043,7 @@ function detectCompat(model: Model<"openai-completions">): ResolvedOpenAIComplet
 	return {
 		supportsStore: !isNonStandard,
 		supportsDeveloperRole: !isNonStandard,
-		supportsReasoningEffort: !isGrok && !isZai && !isTogether,
+		supportsReasoningEffort: !isGrok && !isZai,
 		reasoningEffortMap,
 		supportsUsageInStreaming: true,
 		maxTokensField: useMaxTokens ? "max_tokens" : "max_completion_tokens",
@@ -1052,7 +1053,9 @@ function detectCompat(model: Model<"openai-completions">): ResolvedOpenAIComplet
 		thinkingFormat: isZai
 			? "zai"
 			: isTogether
-				? "together"
+				? isTogetherOpenAIReasoningModel
+					? "openai"
+					: "together"
 				: provider === "openrouter" || baseUrl.includes("openrouter.ai")
 					? "openrouter"
 					: "openai",

@@ -33,7 +33,7 @@ describe("Together models", () => {
 		expect(model.compat).toEqual({
 			supportsStore: false,
 			supportsDeveloperRole: false,
-			supportsReasoningEffort: false,
+			supportsReasoningEffort: true,
 			maxTokensField: "max_tokens",
 			thinkingFormat: "together",
 		});

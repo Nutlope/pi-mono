@@ -67,10 +67,11 @@ const TOGETHER_BASE_URL = "https://api.together.ai/v1";
 const TOGETHER_COMPAT: OpenAICompletionsCompat = {
 	supportsStore: false,
 	supportsDeveloperRole: false,
-	supportsReasoningEffort: false,
+	supportsReasoningEffort: true,
 	maxTokensField: "max_tokens",
 	thinkingFormat: "together",
 };
+const TOGETHER_OPENAI_REASONING_MODEL_PREFIX = "openai/gpt-oss-";
 
 const AI_GATEWAY_MODELS_URL = "https://ai-gateway.vercel.sh/v1";
 const AI_GATEWAY_BASE_URL = "https://ai-gateway.vercel.sh";
@@ -85,6 +86,16 @@ function getAnthropicMessagesCompat(provider: string, modelId: string): Anthropi
 	return EAGER_TOOL_INPUT_STREAMING_UNSUPPORTED_ANTHROPIC_MODELS.has(`${provider}:${modelId}`)
 		? { supportsEagerToolInputStreaming: false }
 		: undefined;
+}
+
+function getTogetherCompat(modelId: string): OpenAICompletionsCompat {
+	return modelId.startsWith(TOGETHER_OPENAI_REASONING_MODEL_PREFIX)
+		? {
+				...TOGETHER_COMPAT,
+				supportsReasoningEffort: true,
+				thinkingFormat: "openai",
+			}
+		: TOGETHER_COMPAT;
 }
 
 function getBedrockBaseUrl(modelId: string): string {
@@ -547,7 +558,7 @@ async function loadModelsDevData(): Promise<Model<any>[]> {
 						cacheRead: m.cost?.cache_read || 0,
 						cacheWrite: m.cost?.cache_write || 0,
 					},
-					compat: TOGETHER_COMPAT,
+					compat: getTogetherCompat(modelId),
 					contextWindow: m.limit?.context || 4096,
 					maxTokens: m.limit?.output || 4096,
 				});
@@ -930,7 +941,7 @@ async function generateModels() {
 				cacheRead: 0,
 				cacheWrite: 0,
 			},
-			compat: TOGETHER_COMPAT,
+			compat: getTogetherCompat("moonshotai/Kimi-K2.6"),
 			contextWindow: 262144,
 			maxTokens: 16384,
 		});

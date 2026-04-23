@@ -11722,7 +11722,7 @@ export const MODELS = {
 			name: "Kimi K2.6",
 			api: "openai-completions",
 			provider: "together",
-			baseUrl: "https://api.together.xyz/v1",
+			baseUrl: "https://api.together.ai/v1",
 			reasoning: false,
 			input: ["text"],
 			cost: {

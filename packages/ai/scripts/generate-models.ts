@@ -18,7 +18,6 @@ const packageRoot = join(__dirname, "..");
 interface ModelsDevModel {
 	id: string;
 	name: string;
-	status?: string;
 	tool_call?: boolean;
 	reasoning?: boolean;
 	limit?: {
@@ -36,7 +35,6 @@ interface ModelsDevModel {
 	};
 	provider?: {
 		npm?: string;
-		api?: string;
 	};
 }
 
@@ -65,7 +63,7 @@ const KIMI_STATIC_HEADERS = {
 	"User-Agent": "KimiCLI/1.5",
 } as const;
 
-const TOGETHER_BASE_URL = "https://api.together.xyz/v1";
+const TOGETHER_BASE_URL = "https://api.together.ai/v1";
 const TOGETHER_COMPAT: OpenAICompletionsCompat = {
 	supportsStore: false,
 	supportsDeveloperRole: false,
@@ -531,7 +529,7 @@ async function loadModelsDevData(): Promise<Model<any>[]> {
 		const togetherProvider = data.together ?? data.togetherai ?? data["together-ai"];
 		if (togetherProvider?.models) {
 			for (const [modelId, model] of Object.entries(togetherProvider.models)) {
-				const m = model as ModelsDevModel;
+				const m = model as ModelsDevModel & { status?: string };
 				if (m.tool_call !== true) continue;
 				if (m.status === "deprecated") continue;
 

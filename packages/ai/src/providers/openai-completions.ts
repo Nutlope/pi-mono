@@ -1008,7 +1008,8 @@ function detectCompat(model: Model<"openai-completions">): ResolvedOpenAIComplet
 	const baseUrl = model.baseUrl;
 
 	const isZai = provider === "zai" || baseUrl.includes("api.z.ai");
-	const isTogether = provider === "together" || baseUrl.includes("api.together.xyz");
+	const isTogether =
+		provider === "together" || baseUrl.includes("api.together.ai") || baseUrl.includes("api.together.xyz");
 
 	const isNonStandard =
 		provider === "cerebras" ||

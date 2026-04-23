@@ -11726,9 +11726,9 @@ export const MODELS = {
 			reasoning: false,
 			input: ["text"],
 			cost: {
-				input: 1,
-				output: 3,
-				cacheRead: 0,
+				input: 1.2,
+				output: 4.5,
+				cacheRead: 0.2,
 				cacheWrite: 0,
 			},
 			compat: {

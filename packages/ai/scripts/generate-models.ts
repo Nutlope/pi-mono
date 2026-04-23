@@ -18,6 +18,7 @@ const packageRoot = join(__dirname, "..");
 interface ModelsDevModel {
 	id: string;
 	name: string;
+	status?: string;
 	tool_call?: boolean;
 	reasoning?: boolean;
 	limit?: {
@@ -35,6 +36,7 @@ interface ModelsDevModel {
 	};
 	provider?: {
 		npm?: string;
+		api?: string;
 	};
 }
 
@@ -62,6 +64,15 @@ const COPILOT_STATIC_HEADERS = {
 const KIMI_STATIC_HEADERS = {
 	"User-Agent": "KimiCLI/1.5",
 } as const;
+
+const TOGETHER_BASE_URL = "https://api.together.xyz/v1";
+const TOGETHER_COMPAT: OpenAICompletionsCompat = {
+	supportsStore: false,
+	supportsDeveloperRole: false,
+	supportsReasoningEffort: false,
+	maxTokensField: "max_tokens",
+	thinkingFormat: "together",
+};
 
 const AI_GATEWAY_MODELS_URL = "https://ai-gateway.vercel.sh/v1";
 const AI_GATEWAY_BASE_URL = "https://ai-gateway.vercel.sh";
@@ -516,6 +527,35 @@ async function loadModelsDevData(): Promise<Model<any>[]> {
 			}
 		}
 
+		// Process Together AI models
+		const togetherProvider = data.together ?? data.togetherai ?? data["together-ai"];
+		if (togetherProvider?.models) {
+			for (const [modelId, model] of Object.entries(togetherProvider.models)) {
+				const m = model as ModelsDevModel;
+				if (m.tool_call !== true) continue;
+				if (m.status === "deprecated") continue;
+
+				models.push({
+					id: modelId,
+					name: m.name || modelId,
+					api: "openai-completions",
+					provider: "together",
+					baseUrl: TOGETHER_BASE_URL,
+					reasoning: m.reasoning === true,
+					input: m.modalities?.input?.includes("image") ? ["text", "image"] : ["text"],
+					cost: {
+						input: m.cost?.input || 0,
+						output: m.cost?.output || 0,
+						cacheRead: m.cost?.cache_read || 0,
+						cacheWrite: m.cost?.cache_write || 0,
+					},
+					compat: TOGETHER_COMPAT,
+					contextWindow: m.limit?.context || 4096,
+					maxTokens: m.limit?.output || 4096,
+				});
+			}
+		}
+
 		// Process OpenCode models (Zen and Go)
 		// API mapping based on provider.npm field:
 		// - @ai-sdk/openai → openai-responses
@@ -873,6 +913,28 @@ async function generateModels() {
 			},
 			contextWindow: 1000000,
 			maxTokens: 64000,
+		});
+	}
+
+	// Add default Together model until models.dev includes it.
+	if (!allModels.some((m) => m.provider === "together" && m.id === "moonshotai/Kimi-K2.6")) {
+		allModels.push({
+			id: "moonshotai/Kimi-K2.6",
+			name: "Kimi K2.6",
+			api: "openai-completions",
+			baseUrl: TOGETHER_BASE_URL,
+			provider: "together",
+			reasoning: false,
+			input: ["text"],
+			cost: {
+				input: 1,
+				output: 3,
+				cacheRead: 0,
+				cacheWrite: 0,
+			},
+			compat: TOGETHER_COMPAT,
+			contextWindow: 262144,
+			maxTokens: 16384,
 		});
 	}
 

@@ -11716,6 +11716,32 @@ export const MODELS = {
 			maxTokens: 128000,
 		} satisfies Model<"openai-completions">,
 	},
+	"together": {
+		"moonshotai/Kimi-K2.6": {
+			id: "moonshotai/Kimi-K2.6",
+			name: "Kimi K2.6",
+			api: "openai-completions",
+			provider: "together",
+			baseUrl: "https://api.together.xyz/v1",
+			reasoning: false,
+			input: ["text"],
+			cost: {
+				input: 1,
+				output: 3,
+				cacheRead: 0,
+				cacheWrite: 0,
+			},
+			compat: {
+				supportsStore: false,
+				supportsDeveloperRole: false,
+				supportsReasoningEffort: false,
+				maxTokensField: "max_tokens",
+				thinkingFormat: "together",
+			},
+			contextWindow: 262144,
+			maxTokens: 16384,
+		} satisfies Model<"openai-completions">,
+	},
 	"vercel-ai-gateway": {
 		"alibaba/qwen-3-14b": {
 			id: "alibaba/qwen-3-14b",

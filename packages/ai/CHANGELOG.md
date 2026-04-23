@@ -6,6 +6,7 @@
 
 - Added GPT-5.5 to OpenAI Codex model generation.
 - Added `findEnvKeys()` so callers can identify configured provider API-key environment variables without exposing credential values while preserving `getEnvApiKey()` as the credential-value API.
+- Added Together AI provider support via Together's OpenAI-compatible API, including built-in models sourced from models.dev and `TOGETHER_API_KEY` auth.
 
 ### Fixed
 

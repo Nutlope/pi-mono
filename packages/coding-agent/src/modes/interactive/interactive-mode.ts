@@ -192,6 +192,7 @@ const API_KEY_LOGIN_PROVIDERS: Record<string, string> = {
 	"opencode-go": "OpenCode Go",
 	openai: "OpenAI",
 	openrouter: "OpenRouter",
+	together: "Together AI",
 	"vercel-ai-gateway": "Vercel AI Gateway",
 	xai: "xAI",
 	zai: "ZAI",

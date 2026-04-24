@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.70.0] - 2026-04-23
+
 ### Added
 
 - Added GPT-5.5 to OpenAI Codex model generation.

@@ -8193,7 +8193,7 @@ export const MODELS = {
 				cacheRead: 0.024999999999999998,
 				cacheWrite: 0.08333333333333334,
 			},
-			contextWindow: 1048576,
+			contextWindow: 1000000,
 			maxTokens: 8192,
 		} satisfies Model<"openai-completions">,
 		"google/gemini-2.0-flash-lite-001": {
@@ -8682,12 +8682,12 @@ export const MODELS = {
 			input: ["text"],
 			cost: {
 				input: 0.15,
-				output: 1.2,
-				cacheRead: 0.075,
+				output: 1.15,
+				cacheRead: 0.03,
 				cacheWrite: 0,
 			},
 			contextWindow: 196608,
-			maxTokens: 65536,
+			maxTokens: 4096,
 		} satisfies Model<"openai-completions">,
 		"minimax/minimax-m2.5:free": {
 			id: "minimax/minimax-m2.5:free",

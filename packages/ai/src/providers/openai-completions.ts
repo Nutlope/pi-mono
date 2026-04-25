@@ -144,8 +144,13 @@ export const streamOpenAICompletions: StreamFunction<"openai-completions", OpenA
 			if (nextParams !== undefined) {
 				params = nextParams as OpenAI.Chat.Completions.ChatCompletionCreateParamsStreaming;
 			}
+			const requestOptions = {
+				...(options?.signal ? { signal: options.signal } : {}),
+				...(options?.timeoutMs !== undefined ? { timeout: options.timeoutMs } : {}),
+				...(options?.maxRetries !== undefined ? { maxRetries: options.maxRetries } : {}),
+			};
 			const { data: openaiStream, response } = await client.chat.completions
-				.create(params, { signal: options?.signal })
+				.create(params, requestOptions)
 				.withResponse();
 			await options?.onResponse?.({ status: response.status, headers: headersToRecord(response.headers) }, model);
 			stream.push({ type: "start", partial: output });
@@ -499,7 +504,7 @@ function buildParams(
 		params.temperature = options.temperature;
 	}
 
-	if (context.tools) {
+	if (context.tools && context.tools.length > 0) {
 		params.tools = convertTools(context.tools, compat);
 		if (compat.zaiToolStream) {
 			(params as any).tool_stream = true;
@@ -526,6 +531,11 @@ function buildParams(
 			enable_thinking: !!options?.reasoningEffort,
 			preserve_thinking: true,
 		};
+	} else if (compat.thinkingFormat === "deepseek" && model.reasoning) {
+		(params as any).thinking = { type: options?.reasoningEffort ? "enabled" : "disabled" };
+		if (options?.reasoningEffort) {
+			(params as any).reasoning_effort = mapReasoningEffort(options.reasoningEffort, compat.reasoningEffortMap);
+		}
 	} else if (compat.thinkingFormat === "openrouter" && model.reasoning) {
 		// OpenRouter normalizes reasoning across providers via a nested reasoning object.
 		const openRouterParams = params as typeof params & { reasoning?: { effort?: string } };
@@ -834,6 +844,13 @@ export function convertMessages(
 					(assistantMsg as any).reasoning_details = reasoningDetails;
 				}
 			}
+			if (
+				compat.requiresReasoningContentOnAssistantMessages &&
+				model.reasoning &&
+				(assistantMsg as { reasoning_content?: string }).reasoning_content === undefined
+			) {
+				(assistantMsg as { reasoning_content?: string }).reasoning_content = "";
+			}
 			// Skip assistant messages that have no content and no tool calls.
 			// Some providers require "either content or tool_calls, but not none".
 			// Other providers also don't accept empty assistant messages.
@@ -1010,7 +1027,6 @@ function detectCompat(model: Model<"openai-completions">): ResolvedOpenAIComplet
 	const isZai = provider === "zai" || baseUrl.includes("api.z.ai");
 	const isTogether =
 		provider === "together" || baseUrl.includes("api.together.ai") || baseUrl.includes("api.together.xyz");
-	const isTogetherOpenAIReasoningModel = isTogether && model.id.startsWith("openai/gpt-oss-");
 
 	const isNonStandard =
 		provider === "cerebras" ||
@@ -1028,10 +1044,18 @@ function detectCompat(model: Model<"openai-completions">): ResolvedOpenAIComplet
 
 	const isGrok = provider === "xai" || baseUrl.includes("api.x.ai");
 	const isGroq = provider === "groq" || baseUrl.includes("groq.com");
+	const isDeepSeek = provider === "deepseek" || baseUrl.includes("deepseek.com");
 	const cacheControlFormat = provider === "openrouter" && model.id.startsWith("anthropic/") ? "anthropic" : undefined;
 
-	const reasoningEffortMap =
-		isGroq && model.id === "qwen/qwen3-32b"
+	const reasoningEffortMap = isDeepSeek
+		? {
+				minimal: "high",
+				low: "high",
+				medium: "high",
+				high: "high",
+				xhigh: "max",
+			}
+		: isGroq && model.id === "qwen/qwen3-32b"
 			? {
 					minimal: "default",
 					low: "default",
@@ -1050,12 +1074,11 @@ function detectCompat(model: Model<"openai-completions">): ResolvedOpenAIComplet
 		requiresToolResultName: false,
 		requiresAssistantAfterToolResult: false,
 		requiresThinkingAsText: false,
-		thinkingFormat: isZai
-			? "zai"
-			: isTogether
-				? isTogetherOpenAIReasoningModel
-					? "openai"
-					: "together"
+		requiresReasoningContentOnAssistantMessages: isDeepSeek,
+		thinkingFormat: isDeepSeek
+			? "deepseek"
+			: isZai
+				? "zai"
 				: provider === "openrouter" || baseUrl.includes("openrouter.ai")
 					? "openrouter"
 					: "openai",
@@ -1088,6 +1111,9 @@ function getCompat(model: Model<"openai-completions">): ResolvedOpenAICompletion
 		requiresAssistantAfterToolResult:
 			model.compat.requiresAssistantAfterToolResult ?? detected.requiresAssistantAfterToolResult,
 		requiresThinkingAsText: model.compat.requiresThinkingAsText ?? detected.requiresThinkingAsText,
+		requiresReasoningContentOnAssistantMessages:
+			model.compat.requiresReasoningContentOnAssistantMessages ??
+			detected.requiresReasoningContentOnAssistantMessages,
 		thinkingFormat: model.compat.thinkingFormat ?? detected.thinkingFormat,
 		openRouterRouting: model.compat.openRouterRouting ?? {},
 		vercelGatewayRouting: model.compat.vercelGatewayRouting ?? detected.vercelGatewayRouting,

@@ -1079,9 +1079,11 @@ function detectCompat(model: Model<"openai-completions">): ResolvedOpenAIComplet
 			? "deepseek"
 			: isZai
 				? "zai"
-				: provider === "openrouter" || baseUrl.includes("openrouter.ai")
-					? "openrouter"
-					: "openai",
+				: isTogether
+					? "together"
+					: provider === "openrouter" || baseUrl.includes("openrouter.ai")
+						? "openrouter"
+						: "openai",
 		openRouterRouting: {},
 		vercelGatewayRouting: {},
 		zaiToolStream: false,
